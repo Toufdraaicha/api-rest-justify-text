@@ -19,5 +19,4 @@ describe('getToken', () => {
     // Add more expectations as necessary
   });
 
-  // Add more test cases as necessary
 });
