@@ -1,6 +1,6 @@
 // Importez le module de base de données et définissez les types nécessaires
 import db  from '../config/db';
-
+import { RowDataPacket } from 'mysql2';
 // Interface pour le résultat de la requête SQL
 interface TokenUsage {
     word_count: number;
@@ -25,31 +25,38 @@ export const tokenUsageQueries: TokenUsageQueries = {
         }
     },
 
-    async getTokenUsage(token: string,date:string): Promise<TokenUsage|null> {
-        try {
-            return new Promise((resolve, reject) => {
-                db.query('SELECT word_count FROM token_usage WHERE token = ? AND date = ?', [token, date],
-                    (err, rows) => {
-                        if (err) {
-                            reject(err);
-                            return;
-                        }
-    
-                        if (rows.length === 0) {
-                            resolve(null); // Aucun enregistrement trouvé, résoudre avec null
-                            return;
-                        }
-    
-                        resolve(rows[0]); // Renvoie le premier enregistrement de la liste
+    async getTokenUsage(token: string, date: string): Promise<TokenUsage | null> {
+        return new Promise((resolve, reject) => {
+            db.query('SELECT word_count FROM token_usage WHERE token = ? AND date = ?', [token, date],
+                (err, rows: RowDataPacket[]) => {
+                    if (err) {
+                        reject(err);
+                        return;
                     }
-                );
-            });
-        } catch (error) {
-            console.error('Error getting token usage:', error);
-            throw new Error('An error occurred while getting token usage');
-        }
+    
+                    if (rows.length === 0) {
+                        resolve(null); // Aucun enregistrement trouvé, résoudre avec null
+                        return;
+                    }
+    
+                    // Vérifier les données récupérées
+                    const firstRow = rows[0];
+                    // Exemple de vérification : s'assurer que word_count est un nombre positif
+                    if (!Number.isInteger(firstRow.word_count) || firstRow.word_count < 0) {
+                        reject(new Error('Invalid data retrieved from database'));
+                        return;
+                    }
+    
+                    // Créer un objet TokenUsage à partir des données récupérées
+                    const tokenUsage: TokenUsage = {
+                        word_count: firstRow.word_count,
+                    };
+    
+                    resolve(tokenUsage);
+                }
+            );
+        });
     },
-
     // Mettre à jour les informations d'usage d'un token pour une date donnée
     async updateTokenUsage(token: string, date: string, wordCount: number): Promise<void> {
         try {

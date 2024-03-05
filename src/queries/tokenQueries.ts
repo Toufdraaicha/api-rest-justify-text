@@ -1,5 +1,6 @@
 import db  from '../config/db';
 import {Token}  from '../models/token';
+import { RowDataPacket } from 'mysql2';
 // Interface pour les méthodes de requête de token
 export interface TokenQueries {
     insertToken(email: string, token: string, generatedAt: string): Promise<void>;
@@ -23,24 +24,24 @@ export const  tokenQueries: TokenQueries = {
         }
     },
 
-    // Méthode pour récupérer un token pour un email donné à une date donnée
-    async getTokenByEmailAndDate(email: string, date: string): Promise<Token|null> {
-        // Exécutez la requête SQL appropriée pour récupérer le token
+// Méthode pour récupérer un token pour un email donné à une date donnée
+    async getTokenByEmailAndDate(email: string, date: string): Promise<Token | null> {
+        // Execute the appropriate SQL query to retrieve the token
         try {
             return new Promise((resolve, reject) => {
                 db.query('SELECT * FROM tokens WHERE email = ? AND DATE(generated_at) = ?', [email, date],
-                    (err, rows) => {
+                    (err, rows: RowDataPacket[]) => { // Assertion de type à RowDataPacket[]
                         if (err) {
                             reject(err);
                             return;
                         }
-    
+
                         if (rows.length === 0) {
-                            resolve(null); // Aucun enregistrement trouvé, résoudre avec null
+                            resolve(null);
                             return;
                         }
-    
-                        resolve(rows[0]); // Renvoie le premier enregistrement de la liste
+
+                        resolve(rows[0] as Token); // Assertion de type à Token
                     }
                 );
             });
@@ -49,7 +50,6 @@ export const  tokenQueries: TokenQueries = {
             throw new Error('An error occurred while getting token usage');
         }
     },
-
     // Méthode pour mettre à jour un token pour un email donné
     async updateTokenByEmail(email: string, token: string, generatedAt: string) {
         // Exécutez la requête SQL appropriée pour mettre à jour le token

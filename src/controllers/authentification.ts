@@ -16,14 +16,14 @@ export const getToken = async (req: Request, res: Response) => {
         const existingToken = await tokenQueries.getTokenByEmailAndDate(email, today);
     
         
-        if (existingToken  && validateToken(existingToken.token )) {
+        if (existingToken  && validateToken(existingToken?.token )) {
           // Si un token existe déjà pour cet email, renvoyez-le en réponse
           return res.json({ token: existingToken.token });
         }
     
         // Générez un nouveau token et stockez-le dans la base de données
         const token = generateToken(email);
-        await tokenQueries.insertToken(email, token, today);
+        tokenQueries.insertToken(email, token, today);
 
         return res.json({ token });
     } catch (error) {
