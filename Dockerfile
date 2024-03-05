@@ -6,16 +6,19 @@ WORKDIR /usr/src/app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
-
 # Install any needed packages specified in package.json
 RUN npm install
 
-# Bundle app source inside Docker image
+# If you have a separate tsconfig.json file, copy it
+# COPY tsconfig.json ./
+
+# Copy your source files
 COPY . .
 
-# Make port 3000 available to the world outside this container
+# Compile TypeScript to JavaScript
+RUN npx tsc
+
+
+# Expose the port the app runs on
 EXPOSE 3000
-
-# Define command to run the app
-CMD ["node", "app.js"]
-
+CMD ["node", "dist/app.js"]
